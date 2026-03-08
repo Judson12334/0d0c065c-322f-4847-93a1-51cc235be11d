@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ugotowani</title>
+</head>
+<body>
+
+<div class="app">
+
+  <div id="card" class="card">
+    <div class="overlay like"></div>
+    <div class="overlay nope"></div>
+
+    <h1 class="bigTitle"> zaproszenie na randkę</h1>
+    <p>Przesuń kartę w prawo</p>
+    <h1></h1><br><br>
+    <img class="menuImg" src="Nowy projekt.png" alt="jakis baner idk">
+  </div>
+
+
+  <div id="menu" class="screen hidden">
+    <h2 class="bigMenu">Menu</h2>
+
+    <ul>
+      <li>Przystawka: Icebreaker</li>
+      <li>Danie główne: Wszystkie twarze Ghostingu</li>
+      <li>Deser: Słodkie Kłamstewko</li>
+      <li>Drink: Toksyk</li><br>
+      <li><3 dresscode: strój na randkę</li>
+    </ul>
+
+    <img class="menuImg" src="8ebbbf28-2bc1-45d3-805f-ebe583d75270.jpg" alt="Obrazek przedstawiający element menu strony">
+
+    <button class="backBtn" onclick="resetApp()">Powrót</button>
+  </div>
+
+  <div id="wrong" class="screen hidden">
+    <h2>Miało być w prawo :P</h2>
+
+    <img class="menuImg" src="0d0c065c-322f-4847-93a1-51cc235be11d.jpg" alt="Śmieszny obrazek informujący że należało przesunąć w prawo">
+
+    <button class="backBtn" onclick="resetApp()">Spróbuj jeszcze raz</button>
+  </div>
+
+  <div id="matchPopup" class="match hidden">
+    <canvas id="confetti"></canvas>
+    <div class="heart">❤️</div>
+    <h2>IT'S A MATCH!</h2>
+  </div>
+
+</div>
+
+<style>
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family:cursive;
+  user-select: none;
+  font-size: 30px;
+  color: #a50606;
+}
+
+body {
+  background: #a50606;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.app {
+  width: 100%;
+  max-width: 420px;
+  height: 90vh;
+  position: relative;
+}
+
+.card, .screen {
+  background: #FF6C91;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  padding: 40px 20px;
+  text-align: center;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+/* WIĘKSZE NAPISY */
+
+.bigTitle{
+  font-size:60px;
+}
+
+.bigMenu{
+  font-size:55px;
+}
+
+/* IKONY SWIPE */
+
+.overlay {
+  position: absolute;
+  top: 20px;
+  font-size: 100px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.like { left: 20px; color: #16a34a; }
+.nope { right: 20px; color: #dc2626; }
+
+.like-bg { background: #dcfce7; }
+.nope-bg { background: #fee2e2; }
+
+/* LISTA */
+
+.screen ul {
+  list-style: none;
+  margin-top: 20px;
+  text-align: left;
+}
+
+.screen li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* OBRAZEK */
+
+.menuImg{
+  width:100%;
+  margin-top:30px;
+  border-radius:15px;
+}
+
+/* PRZYCISK NA DOLE */
+
+.backBtn{
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  background: #111827;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* MATCH */
+
+.match h2 {
+  margin-top: 20px;
+  font-size: 38px;
+  letter-spacing: 2px;
+}
+
+.heart {
+  font-size: 80px;
+  animation: pulse 0.8s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* ZAWSZE ma wygrywać */
+
+.hidden {
+  display: none !important;
+}
+
+/* MATCH */
+
+.match {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: white;
+  overflow: hidden;
+}
+
+</style>
+
+<script>
+
+const card = document.getElementById("card");
+const menu = document.getElementById("menu");
+const wrong = document.getElementById("wrong");
+const matchPopup = document.getElementById("matchPopup");
+
+const likeIcon = document.querySelector(".like");
+const nopeIcon = document.querySelector(".nope");
+
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
+
+/* SWIPE */
+
+function start(e) {
+  isDragging = true;
+  startX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
+}
+
+function move(e) {
+  if (!isDragging) return;
+  currentX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
+  let diff = currentX - startX;
+
+  card.style.transform = `translateX(${diff}px) rotate(${diff/10}deg)`;
+
+  if (diff > 0) {
+    likeIcon.style.opacity = Math.min(diff / 100, 1);
+    card.classList.add("like-bg");
+    card.classList.remove("nope-bg");
+  } else {
+    nopeIcon.style.opacity = Math.min(Math.abs(diff) / 100, 1);
+    card.classList.add("nope-bg");
+    card.classList.remove("like-bg");
+  }
+}
+
+function end() {
+  if (!isDragging) return;
+  isDragging = false;
+  let diff = currentX - startX;
+
+  if (diff > 120) {
+    showMatch();
+  } else if (diff < -120) {
+    showWrong();
+  } else {
+    resetCard();
+  }
+}
+
+/* MATCH FLOW */
+
+function showMatch() {
+
+  card.classList.add("hidden");
+
+  matchPopup.classList.remove("hidden");
+  startConfetti();
+
+  setTimeout(() => {
+    stopConfetti();
+    matchPopup.classList.add("hidden");
+    menu.classList.remove("hidden");
+  }, 2000);
+
+}
+
+function showWrong() {
+  card.classList.add("hidden");
+  wrong.classList.remove("hidden");
+}
+
+function resetCard() {
+  card.style.transform = "translateX(0)";
+  likeIcon.style.opacity = 0;
+  nopeIcon.style.opacity = 0;
+  card.classList.remove("like-bg", "nope-bg");
+}
+
+function resetApp() {
+  menu.classList.add("hidden");
+  wrong.classList.add("hidden");
+  matchPopup.classList.add("hidden");
+  card.classList.remove("hidden");
+  resetCard();
+  stopConfetti();
+}
+
+/* EVENTS */
+
+card.addEventListener("mousedown", start);
+card.addEventListener("mousemove", move);
+card.addEventListener("mouseup", end);
+card.addEventListener("mouseleave", end);
+
+card.addEventListener("touchstart", start);
+card.addEventListener("touchmove", move);
+card.addEventListener("touchend", end);
+
+/* CONFETTI */
+
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+
+let confetti = [];
+let animation;
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+
+function createConfetti() {
+  confetti = [];
+  for (let i = 0; i < 150; i++) {
+    confetti.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      r: Math.random() * 6 + 4,
+      d: Math.random() * 150,
+      color: `hsl(${Math.random()*360},100%,50%)`,
+      tilt: Math.random() * 10 - 10
+    });
+  }
+}
+
+function drawConfetti() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  confetti.forEach(c => {
+    ctx.beginPath();
+    ctx.fillStyle = c.color;
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  updateConfetti();
+}
+
+function updateConfetti() {
+  confetti.forEach(c => {
+    c.y += 3;
+    if (c.y > canvas.height) {
+      c.y = -10;
+      c.x = Math.random() * canvas.width;
+    }
+  });
+}
+
+function startConfetti() {
+  resizeCanvas();
+  createConfetti();
+  animation = setInterval(drawConfetti, 20);
+}
+
+function stopConfetti() {
+  clearInterval(animation);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+</script>
+</body>
+</html>
